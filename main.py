@@ -1,8 +1,20 @@
+"""
+Módulo Principal (Punto de Entrada).
+Administra el menú interactivo, orquesta los llamados a los módulos auxiliares
+(estructuras, persistencia, utils) y controla el flujo general de ejecución.
+"""
+
 import estructuras
 import persistencia
 import utils
 
 def submenu_consultas(estado_archivos):
+    """
+    Submenú secundario para consultar, ordenar por permisos y filtrar por riesgo.
+    
+    Parámetros:
+        estado_archivos (list): Lista de registros cargados en memoria.
+    """
     if not estado_archivos:
         print("\n[!] No hay archivos registrados. Escanee un directorio primero.\n")
         return
@@ -14,10 +26,11 @@ def submenu_consultas(estado_archivos):
     opcion = utils.validar_entero("Seleccione una opción (1-2): ", 1, 2)
     
     if opcion == 1:
+        # Realiza copia superficial para preservar la lista original sin modificar
         ordenados = utils.ordenar_por_permisos_burbuja(estado_archivos.copy())
         print("\n--- ARCHIVOS ORDENADOS POR PERMISOS ---")
         for arch in ordenados:
-            print(f"ID: {arch['id']} | Nombre: {arch['nombre']} | Permisos: {arch['permisos']} | Riesgo: {arch['riesgo']}")
+            print(f"ID: {arch['id']} | Nombre: {arch['nombre']} | Permisos: {arch['permisos']} | Riesgo: {arch['riesgo']} | Hash: {arch['firma_hash'][:10]}...")
             
     elif opcion == 2:
         riesgo_buscado = input("Ingrese el nivel de riesgo a buscar (Alto/Medio/Bajo): ").strip().capitalize()
@@ -26,12 +39,16 @@ def submenu_consultas(estado_archivos):
         if filtrados:
             print(f"\n--- ARCHIVOS CON RIESGO '{riesgo_buscado}' ---")
             for arch in filtrados:
-                print(f"ID: {arch['id']} | Nombre: {arch['nombre']} | Permisos: {arch['permisos']} | Ruta: {arch['ruta']}")
+                print(f"ID: {arch['id']} | Nombre: {arch['nombre']} | Permisos: {arch['permisos']} | Ruta: {arch['ruta']} | Hash: {arch['firma_hash'][:10]}...")
         else:
             print(f"\n[!] No se encontraron archivos con el riesgo '{riesgo_buscado}'.")
 
 def menu_principal():
+    """
+    Función principal que despliega el menú de consola e interacciona con el usuario.
+    """
     archivo_json = "estado_auditoria.json"
+    # Carga inicial de datos desde la persistencia JSON
     estado_archivos = persistencia.cargar_datos_json(archivo_json)
     persistencia.mostrar_logs("[+] Inicio de sesión de la aplicación")
     
@@ -71,6 +88,7 @@ def menu_principal():
             id_eliminar = utils.validar_entero("\n[*] Ingrese el ID del archivo a eliminar del registro: ", 1, 99999)
             total_antes = len(estado_archivos)
             
+            # Filtra conservando únicamente los registros con ID diferente
             estado_archivos = [arch for arch in estado_archivos if arch and arch['id'] != id_eliminar]
             
             if len(estado_archivos) < total_antes:
